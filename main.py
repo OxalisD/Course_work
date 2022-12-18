@@ -1,6 +1,7 @@
 import json
 import requests
 from datetime import datetime
+from progress.bar import IncrementalBar
 
 
 class Vkontakte:
@@ -57,9 +58,7 @@ class YandexDisc:
         uri = "v1/disk/resources/upload"
         params = {"path": f'{yandex_path}/{name}', "url": url}
         response = requests.post(self.base_host + uri, headers=self.__headers, params=params)
-        if response.status_code == 202:
-            print(f"Фото загружено")
-        else:
+        if response.status_code != 202:
             print(f'Фото не загружено. Ошибка: {response.status_code}')
 
     def folder_creation(self, path):
@@ -82,11 +81,13 @@ def write_logs(val):
 def backup_photos(photos: dict):
     data = []
     ya.folder_creation(folder)
-    print('Начало загрузки фотографий')
+    bar = IncrementalBar('Загрузка фотографий', max=5)
     for url, values in photos.items():
         name = str(values['likes']) + '.jpg'
         ya.upload_from_internet(url, folder, name)
         data.append({"file_name": name, "size": values['size']})
+        bar.next()
+    bar.finish()
     write_logs(data)
     print('Загрузка фотографий завершена')
 
